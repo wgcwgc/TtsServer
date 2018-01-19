@@ -55,14 +55,14 @@ public class SetWords extends Thread
 	private String MIMEType;
 	private int port;
 	
-	private SetWords(String data , String encoding ,
-			String MIMEType , int port) throws UnsupportedEncodingException
+	private SetWords(String data , String encoding , String MIMEType , int port)
+			throws UnsupportedEncodingException
 	{
 		this(data.getBytes(encoding) , encoding , MIMEType , port);
 	}
 	
-	private SetWords(byte [] data , String encoding ,
-			String MIMEType , int port) throws UnsupportedEncodingException
+	private SetWords(byte [] data , String encoding , String MIMEType , int port)
+			throws UnsupportedEncodingException
 	{
 		this.encoding = encoding;
 		this.content = data;
@@ -130,13 +130,32 @@ public class SetWords extends Thread
 						{
 							// 请求合法
 							if(str.contains("setWords?")
-									&& str.contains("words="))
+									&& str.contains("words=")
+									&& str.contains("&sign="))
 							{
-								String string = str.substring(
-										str.indexOf("=") + 1 ,
+								str = str.substring(str.indexOf("=") + 1 ,
 										str.indexOf(" HTTP/"));
+								String [] list = str.split("&");
+								if(list.length != 2)
+								{
+									System.out.println("请求参数有误");
+									PrintLog.printLog("请求参数有误");
+									writeRespose(request , "请求参数有误" , out , 1);
+									continue;
+								}
+								String string = list[0];
+								String sign = list[1].substring(list[1]
+										.indexOf("=") + 1);
+//								System.out.println(sign);
 								System.out.print(string);
 								PrintLog.printLog(string);
+								if(!judge(string , sign))
+								{
+									System.out.println("请求参数有误");
+									PrintLog.printLog("请求参数有误");
+									writeRespose(request , "请求参数有误" , out , 1);
+									continue;
+								}
 								string = URLDecoder.decode(string , "utf-8");
 								System.out.println(string);
 								PrintLog.printLog(string);
@@ -196,7 +215,7 @@ public class SetWords extends Thread
 											continue;
 										}
 									}
-									writeRespose(request , string , out , 0);
+									writeRespose(request , list[0] , out , 0);
 									
 								}
 								else
@@ -295,10 +314,10 @@ public class SetWords extends Thread
 //				}
 //				this.content = localWrite.toByteArray();
 //				MIMEType = "audio/mp3";
-				
 				jsonObject = new JSONObject();
 				jsonObject.put("result" , 0);
-				jsonObject.put("mesg" , "生成成功");
+				jsonObject.put("url" , "http://172.16.0.63:8089/getWords?words=" + string + "&sign=" + MD5.md5(Util.SECRETKEY + string));
+				jsonObject.put("mesg" , "OK");
 				string = jsonObject.toString();
 				localWrite.write(string.getBytes(this.encoding));
 				this.content = localWrite.toByteArray();
@@ -368,6 +387,24 @@ public class SetWords extends Thread
 			}
 		}
 	}
+	/**
+	 * 
+	 * @param string
+	 * @param sign
+	 * @return 判断md5加密是否正确
+	 */
+	private boolean judge(String string , String sign)
+	{
+		System.out.println(string);
+		System.out.println(sign);
+		System.out.println(MD5.md5(Util.SECRETKEY + string));
+		// 判断加密是否正确
+		if(sign.equals(MD5.md5(Util.SECRETKEY + string)))
+		{
+			return true;
+		}
+		return false;
+	}
 	
 	/**
 	 * @param string
@@ -436,8 +473,7 @@ public class SetWords extends Thread
 			String contentType = "audio/mp3";
 			String encoding = "utf-8";
 			int port = 8088;
-			Thread thread = new SetWords(contentType , encoding ,
-					port);
+			Thread thread = new SetWords(contentType , encoding , port);
 			thread.start();
 			new RemoveMp3Files(TIME).start();
 			Scanner cinScanner = new Scanner(System.in);

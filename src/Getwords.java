@@ -26,6 +26,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -55,14 +56,14 @@ public class Getwords extends Thread
 	private String MIMEType;
 	private int port;
 	
-	private Getwords(String data , String encoding ,
-			String MIMEType , int port) throws UnsupportedEncodingException
+	private Getwords(String data , String encoding , String MIMEType , int port)
+			throws UnsupportedEncodingException
 	{
 		this(data.getBytes(encoding) , encoding , MIMEType , port);
 	}
 	
-	private Getwords(byte [] data , String encoding ,
-			String MIMEType , int port) throws UnsupportedEncodingException
+	private Getwords(byte [] data , String encoding , String MIMEType , int port)
+			throws UnsupportedEncodingException
 	{
 		this.encoding = encoding;
 		this.content = data;
@@ -76,8 +77,8 @@ public class Getwords extends Thread
 	 * @param encoding utf-8
 	 * @param port 8088
 	 */
-	private Getwords(String MIMEType , String encoding ,
-			int port) throws UnsupportedEncodingException
+	private Getwords(String MIMEType , String encoding , int port)
+			throws UnsupportedEncodingException
 	{
 		this.MIMEType = MIMEType;
 		this.encoding = encoding;
@@ -128,12 +129,34 @@ public class Getwords extends Thread
 						// get
 						if(str.startsWith("GET /"))
 						{
+							// 请求合法
 							if(str.contains("getWords?")
-									&& str.contains("words="))// 请求合法
+									&& str.contains("words=")
+									&& str.contains("&sign="))
 							{
-								String string = str.substring(
-										str.indexOf("=") + 1 ,
+								str = str.substring(str.indexOf("=") + 1 ,
 										str.indexOf(" HTTP/"));
+								String [] list = str.split("&");
+								if(list.length != 2)
+								{
+									System.out.println("请求参数有误");
+									PrintLog.printLog("请求参数有误");
+									writeRespose(request , "请求参数有误" , out , 1);
+									continue;
+								}
+								String string = list[0];
+								String sign = list[1].substring(list[1]
+										.indexOf("=") + 1);
+//								System.out.println(sign);
+								System.out.print(string);
+								PrintLog.printLog(string);
+								if( ! judge(string , sign))
+								{
+									System.out.println("请求参数有误");
+									PrintLog.printLog("请求参数有误");
+									writeRespose(request , "请求参数有误" , out , 1);
+									continue;
+								}
 								System.out.print(string);
 								PrintLog.printLog(string);
 								string = URLDecoder.decode(string , "utf-8");
@@ -238,21 +261,21 @@ public class Getwords extends Thread
 			ByteArrayOutputStream localWrite = new ByteArrayOutputStream();
 			if(0 == flag)
 			{
-//				localRead = new FileInputStream(rootPath + string + ".mp3");
-//				int b;
-//				while( ( b = localRead.read() ) != - 1)
-//				{
-//					localWrite.write(b);
-//				}
-//				this.content = localWrite.toByteArray();
-//				MIMEType = "audio/mp3";
-				jsonObject = new JSONObject();
-				jsonObject.put("result" , 0);
-				jsonObject.put("mesg" , rootPath + string + ".mp3");
-				string = jsonObject.toString();
-				localWrite.write(string.getBytes(this.encoding));
+				localRead = new FileInputStream(rootPath + string + ".mp3");
+				int b;
+				while( ( b = localRead.read() ) != - 1)
+				{
+					localWrite.write(b);
+				}
 				this.content = localWrite.toByteArray();
-				MIMEType = "text/html";
+				MIMEType = "audio/mp3";
+//				jsonObject = new JSONObject();
+//				jsonObject.put("result" , 0);
+//				jsonObject.put("mesg" , "http://172.16.0.63:8089/" + rootPath + string + ".mp3");
+//				string = jsonObject.toString();
+//				localWrite.write(string.getBytes(this.encoding));
+//				this.content = localWrite.toByteArray();
+//				MIMEType = "text/html";
 			}
 			else if(1 == flag)
 			{
@@ -316,6 +339,25 @@ public class Getwords extends Thread
 				}
 			}
 		}
+	}
+	
+	/**
+	 * 
+	 * @param string
+	 * @param sign
+	 * @return 判断md5加密是否正确
+	 */
+	private boolean judge(String string , String sign)
+	{
+		System.out.println(string);
+		System.out.println(sign);
+		System.out.println(MD5.md5(Util.SECRETKEY + string));
+		// 判断加密是否正确
+		if(sign.equals(MD5.md5(Util.SECRETKEY + string)))
+		{
+			return true;
+		}
+		return false;
 	}
 	
 	/**
@@ -385,8 +427,7 @@ public class Getwords extends Thread
 			String contentType = "audio/mp3";
 			String encoding = "utf-8";
 			int port = 8089;
-			Thread thread = new Getwords(contentType ,
-					encoding , port);
+			Thread thread = new Getwords(contentType , encoding , port);
 			thread.start();
 			new RemoveMp3Files(TIME).start();
 			Scanner cinScanner = new Scanner(System.in);

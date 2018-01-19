@@ -23,6 +23,7 @@ import java.io.IOException;
 
 public class Util
 {
+	public static String SECRETKEY = "8848@jzb";
 	public static String rootPath = null;
 	public static String getPath()
 	{
