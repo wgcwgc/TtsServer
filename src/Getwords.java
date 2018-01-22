@@ -349,9 +349,9 @@ public class Getwords extends Thread
 	 */
 	private boolean judge(String string , String sign)
 	{
-		System.out.println(string);
-		System.out.println(sign);
-		System.out.println(MD5.md5(Util.SECRETKEY + string));
+//		System.out.println(string);
+//		System.out.println(sign);
+//		System.out.println(MD5.md5(Util.SECRETKEY + string));
 		// 判断加密是否正确
 		if(sign.equals(MD5.md5(Util.SECRETKEY + string)))
 		{

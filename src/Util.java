@@ -23,8 +23,10 @@ import java.io.IOException;
 
 public class Util
 {
+	public static ReadIniFile readIniFile;
 	public static String SECRETKEY = "8848@jzb";
 	public static String rootPath = null;
+	
 	public static String getPath()
 	{
 		try
@@ -38,12 +40,46 @@ public class Util
 		return rootPath;
 	}
 	
+	public static String getAcceptPort()
+	{
+		readIniFile = new ReadIniFile("config");
+		return readIniFile.getValue("port" , "acceptPort");
+	}
+	
+	public static String getSendPort()
+	{
+		readIniFile = new ReadIniFile("config");
+		return readIniFile.getValue("port" , "sendPort");
+	}
+	
+	public static String getServerIP()
+	{
+		readIniFile = new ReadIniFile("config");
+		return readIniFile.getValue("ip" , "sendIP");
+	}
+	
+	public static String getEncryptFileName()
+	{
+		String content = "";
+		long currentTime = System.currentTimeMillis();
+		content += currentTime;
+		int random = (int) ( 10 * Math.random() );
+		content += "#" + random;
+		int num = 3;
+		while(num -- != 0)
+		{
+			random = (int) ( 10 * Math.random() );
+			content += random;
+		}
+		return content;
+	}
+	
 	/**
 	 * @param args
 	 */
 	public static void main(String [] args)
 	{
-		
+		System.out.println(getEncryptFileName());
 	}
 	
 }

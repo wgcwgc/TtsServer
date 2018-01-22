@@ -149,7 +149,7 @@ public class SetWords extends Thread
 //								System.out.println(sign);
 								System.out.print(string);
 								PrintLog.printLog(string);
-								if(!judge(string , sign))
+								if( ! judge(string , sign))
 								{
 									System.out.println("请求参数有误");
 									PrintLog.printLog("请求参数有误");
@@ -161,6 +161,8 @@ public class SetWords extends Thread
 								PrintLog.printLog(string);
 								if(judge(string , 1))
 								{
+//									String encryptFileName = getEncryptFileName();
+									
 									if( ! new File(rootPath + string + ".mp3")
 											.exists())
 									{
@@ -287,6 +289,26 @@ public class SetWords extends Thread
 	}
 	
 	/**
+	 * @return
+	 */
+	@SuppressWarnings("unused")
+	private String getEncryptFileName()
+	{
+		String content = "";
+		long currentTime = System.currentTimeMillis();
+		content += currentTime;
+		int random = (int) ( 10 * Math.random() );
+		content += random;
+		int num = 3;
+		while(num -- != 0)
+		{
+			random = (int) ( 10 * Math.random() );
+			content += random;
+		}
+		return content;
+	}
+	
+	/**
 	 * request 请求头
 	 * string 音频名
 	 * out 输出流对象
@@ -316,7 +338,14 @@ public class SetWords extends Thread
 //				MIMEType = "audio/mp3";
 				jsonObject = new JSONObject();
 				jsonObject.put("result" , 0);
-				jsonObject.put("url" , "http://172.16.0.63:8089/getWords?words=" + string + "&sign=" + MD5.md5(Util.SECRETKEY + string));
+				jsonObject.put(
+						"url" ,
+						"http://"
+								+ InetAddress.getLocalHost().getHostAddress()
+										.toString() + ":"
+								+ Integer.parseInt(Util.getSendPort())
+								+ "/getWords?words=" + string + "&sign="
+								+ MD5.md5(Util.SECRETKEY + string));
 				jsonObject.put("mesg" , "OK");
 				string = jsonObject.toString();
 				localWrite.write(string.getBytes(this.encoding));
@@ -387,6 +416,7 @@ public class SetWords extends Thread
 			}
 		}
 	}
+	
 	/**
 	 * 
 	 * @param string
@@ -395,9 +425,9 @@ public class SetWords extends Thread
 	 */
 	private boolean judge(String string , String sign)
 	{
-		System.out.println(string);
-		System.out.println(sign);
-		System.out.println(MD5.md5(Util.SECRETKEY + string));
+//		System.out.println(string);
+//		System.out.println(sign);
+//		System.out.println(MD5.md5(Util.SECRETKEY + string));
 		// 判断加密是否正确
 		if(sign.equals(MD5.md5(Util.SECRETKEY + string)))
 		{
@@ -472,7 +502,7 @@ public class SetWords extends Thread
 		{
 			String contentType = "audio/mp3";
 			String encoding = "utf-8";
-			int port = 8088;
+			int port = Integer.parseInt(Util.getAcceptPort());
 			Thread thread = new SetWords(contentType , encoding , port);
 			thread.start();
 			new RemoveMp3Files(TIME).start();
